@@ -37,6 +37,7 @@ class Trainer:
         
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
+        self.num_epochs = train_config.num_epochs
     
     @staticmethod
     def build_model(model_config):
@@ -117,11 +118,29 @@ class Trainer:
 
         return total_loss / len(self.train_dataset)
     
-    def train(self, num_epochs):
-        for epoch in range(num_epochs):
+    def train(self):
+
+        checkpoint_interval = self.train_config.checkpoint_interval
+        checkpoint_dir = self.train_config.checkpoint_dir
+        checkpoint_subdir = os.path.join(checkpoint_dir, 'checkpoint')
+
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
+        
+        if not os.path.exists(checkpoint_subdir):
+            os.makedirs(checkpoint_subdir)
+
+        self.model.train()
+        for epoch in range(self.num_epochs):
             loss = self.train_one_epoch()
             acc, ap = self.validate()
             print('Epoch:', epoch, 'Loss:', loss, 'Acc:', acc, 'AP:', ap)
+            if epoch % checkpoint_interval == 0:
+                checkpoint_path = os.path.join(checkpoint_subdir, f'_epoch_{epoch}.pth')
+                self.model.save_model(checkpoint_path)
+                print('Checkpoint saved to:', checkpoint_path)
+        
+        print('Training finished...')
         
     def validate(self):
         self.model.eval()
@@ -146,27 +165,46 @@ if __name__ == '__main__':
     parser.add_argument('--config_dir', type=str, default='./config')
     parser.add_argument('--model_name', type=str, default='alexnet')
     parser.add_argument('--device', type=str, default='cuda')
-    parser.add_argument('--load_checkpoint_path', type=str, default=None)
-    parser.add_argument('--save_checkpoint_path', type=str, default=None)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--optimizer', type=str, default='adam')
+    parser.add_argument('--scheduler', type=str, default='step')
+    parser.add_argument('--learning_rate', type=float, default=0.001)
+    parser.add_argument('--weight_decay', type=float, default=0.0)
+    parser.add_argument('--step_size', type=int, default=30)
+    parser.add_argument('--gamma', type=float, default=0.1)
+    parser.add_argument('--checkpoint_interval', type=int, default=10)
+    parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints/checkpoint')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_epochs', type=int, default=100)
+    parser.add_argument('--load_from', type=str, default=None)
     args = parser.parse_args()
     
-    dataset_config = DatasetConfig()
-    dataset_config.load(os.path.join(parser.config_dir, 'dataset_config.json'))
-    model_config = ModelConfig()
-    model_config.load(os.path.join(parser.config_dir, 'model_config.json'))
-    train_config = TrainConfig()
-    train_config.load(os.path.join(parser.config_dir, 'train_config.json'))
+    if args.load_from:
+        dataset_config = DatasetConfig()
+        model_config = ModelConfig()
+        train_config = TrainConfig()
+        dataset_config.load(os.path.join(args.load_from, 'dataset_config.json'))
+        model_config.load(os.path.join(args.load_from, 'model_config.json'))
+        train_config.load(os.path.join(args.load_from, 'train_config.json'))
+    else:
+        dataset_config = DatasetConfig()
+        dataset_config.load(os.path.join(parser.config_dir, 'dataset_config.json'))
+        model_config = ModelConfig()
+        model_config.load(os.path.join(parser.config_dir, 'model_config.json'))
+        train_config = TrainConfig()
+        train_config.load(os.path.join(parser.config_dir, 'train_config.json'))
 
     for cfg in (dataset_config, model_config, train_config):
         for key, value in vars(args).items():
             setattr(cfg, key, value)
 
     trainer = Trainer(dataset_config, model_config, train_config)
-    trainer.train(10)
+    if args.load_from:
+        model_path = os.path.join(args.load_from, model_config.model_name + '.pth')
+        trainer.model.load_model(model_path)
+        print('Model loaded from:', model_path)
+
+    trainer.train(train_config.num_epochs)
     acc, ap = trainer.validate()
     print('Validation Acc:', acc, 'Validation AP:', ap)
-    trainer.model.save_model('alexnet.pth')
-    print('Model saved to alexnet.pth')
+    trainer.model.save_model(model_config.model_name + '.pth')
+    print('Model saved to:', model_config.model_name + '.pth')

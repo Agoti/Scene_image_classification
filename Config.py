@@ -34,8 +34,6 @@ class ModelConfig(Config):
 
     def __init__(self,
                 name='alexnet',
-                load_checkpoint_path=None,
-                save_checkpoint_path=None,
                 **kwargs):
         for key, value in locals().items():
             if key not in ['self', 'kwargs'] and not key.startswith('_'):
