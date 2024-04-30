@@ -21,7 +21,6 @@ class DatasetConfig(Config):
     
     def __init__(self,
                 data_dir='./data',  
-                split='train',
                 transform_name='default', 
                 max_data_num=float('inf'),
                 **kwargs):
@@ -33,7 +32,7 @@ class DatasetConfig(Config):
 class ModelConfig(Config):
 
     def __init__(self,
-                name='alexnet',
+                model_name='alexnet',
                 **kwargs):
         for key, value in locals().items():
             if key not in ['self', 'kwargs'] and not key.startswith('_'):
@@ -56,6 +55,7 @@ class TrainConfig(Config):
                 gamma=0.1,
                 checkpoint_interval=10,
                 checkpoint_dir='./checkpoints',
+                seed=0,
                 **kwargs):
         for key, value in locals().items():
             if key not in ['self', 'kwargs'] and not key.startswith('_'):

@@ -1,6 +1,9 @@
 import os
 import torch
+import numpy as np
+import random
 import argparse
+import tqdm
 from Model import AlexNet
 from Dataset import SceneDataset
 from Config import DatasetConfig, ModelConfig, TrainConfig
@@ -13,11 +16,25 @@ class Trainer:
                  model_config,
                  train_config):
         
+        # Set random seed
+        self.set_seed(train_config.seed)
+        
+        # Store configs
+        self.dataset_config = dataset_config
+        self.model_config = model_config
+        self.train_config = train_config
+        print('Configs:')
+        print('Dataset config:', dataset_config.__dict__)
+        print('Model config:', model_config.__dict__)
+        print('Train config:', train_config.__dict__)
+        print('-' * 50)
+        
         # Build dataset and dataloader
         print('Building dataset and dataloader...')
         self.train_dataset, self.val_dataset = self.build_dataset(dataset_config)
         print('Length of train dataset:', len(self.train_dataset))
         print('Length of val dataset:', len(self.val_dataset))
+        print('-' * 50)
 
         # Build dataloader
         self.train_dataloader = self.build_dataloader(self.train_dataset, train_config.batch_size)
@@ -27,7 +44,9 @@ class Trainer:
         # Build model
         print('Building model...')
         self.model = self.build_model(model_config)
-        print('Finish building model...')
+        # print('Model:')
+        # print(self.model)
+        # print('-' * 50)
 
         # Build optimizer
         self.optimizer, self.scheduler = self.build_optimizer(train_config, self.model)
@@ -37,19 +56,23 @@ class Trainer:
         
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
-        self.num_epochs = train_config.num_epochs
+    
+    def set_seed(self, seed):
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     
     @staticmethod
     def build_model(model_config):
 
-        if model_config.name == 'alexnet':
+        if model_config.model_name == 'alexnet':
             model = AlexNet()
         else:
             raise ValueError('Invalid model name')
-        
-        if model_config.checkpoint_path:
-            print('Loading model checkpoint from:', model_config.checkpoint_path)
-            model.load_model(model_config.checkpoint_path)
         
         return model
     
@@ -61,13 +84,13 @@ class Trainer:
         train_dataset = SceneDataset(train_annotation_path,
                                      image_dir,
                                      split='train',
-                                     transform=dataset_config.transform,
+                                     transform_name=dataset_config.transform_name,
                                      max_data_num=dataset_config.max_data_num)
         
         val_dataset = SceneDataset(val_annotation_path,
                                    image_dir,
                                    split='val',
-                                   transform=dataset_config.transform,
+                                   transform_name=dataset_config.transform_name,
                                    max_data_num=dataset_config.max_data_num)
         
         return train_dataset, val_dataset
@@ -107,16 +130,18 @@ class Trainer:
     def train_one_epoch(self):
         self.model.train()
         total_loss = 0
-        for images, labels in self.train_dataloader:
-            images, labels = images.to(self.device), labels.to(self.device)
-            self.optimizer.zero_grad()
-            outputs = self.model(images)
-            loss = self.criterion(outputs, labels)
-            total_loss += loss.item()
-            loss.backward()
-            self.optimizer.step()
+        with tqdm.tqdm(self.train_dataloader, desc='Training') as t:
+            for images, labels in t:
+                images, labels = images.to(self.device), labels.to(self.device)
+                self.optimizer.zero_grad()
+                outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
+                loss.backward()
+                self.optimizer.step()
+                total_loss += loss.item()
+                t.set_postfix({'loss': total_loss / len(self.train_dataset)})
 
-        return total_loss / len(self.train_dataset)
+        return total_loss / len(self.train_dataset), self.optimizer.param_groups[0]['lr']
     
     def train(self):
 
@@ -131,12 +156,12 @@ class Trainer:
             os.makedirs(checkpoint_subdir)
 
         self.model.train()
-        for epoch in range(self.num_epochs):
-            loss = self.train_one_epoch()
-            acc, ap = self.validate()
-            print('Epoch:', epoch, 'Loss:', loss, 'Acc:', acc, 'AP:', ap)
+        for epoch in range(1, self.train_config.num_epochs + 1):
+            loss, lr = self.train_one_epoch()
+            acc = self.validate()
+            print('Epoch:', epoch, 'Loss: %.4f' % loss, 'Acc: %.4f' % acc, 'LR:', lr)
             if epoch % checkpoint_interval == 0:
-                checkpoint_path = os.path.join(checkpoint_subdir, f'_epoch_{epoch}.pth')
+                checkpoint_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}.pth')
                 self.model.save_model(checkpoint_path)
                 print('Checkpoint saved to:', checkpoint_path)
         
@@ -155,8 +180,20 @@ class Trainer:
         
         gt_labels = self.val_dataset.labels
         acc = accuracy_score(gt_labels, predicted_labels)
-        ap = average_precision_score(gt_labels, predicted_labels)
-        return acc, ap
+        # ap = average_precision_score(gt_labels, predicted_labels)
+        return acc
+    
+    def save(self):
+        model_path = os.path.join(self.train_config.checkpoint_dir, self.model_config.model_name + '.pth')
+        self.model.save_model(model_path)
+        print('Model saved to:', model_path)
+        config_path = os.path.join(self.train_config.checkpoint_dir, 'config')
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+        self.dataset_config.save(os.path.join(config_path, 'dataset_config.json'))
+        self.model_config.save(os.path.join(config_path, 'model_config.json'))
+        self.train_config.save(os.path.join(config_path, 'train_config.json'))
+        print('Config saved to:', config_path)
 
 if __name__ == '__main__':
 
@@ -175,6 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints/checkpoint')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_epochs', type=int, default=100)
+    parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--load_from', type=str, default=None)
     args = parser.parse_args()
     
@@ -187,15 +225,16 @@ if __name__ == '__main__':
         train_config.load(os.path.join(args.load_from, 'train_config.json'))
     else:
         dataset_config = DatasetConfig()
-        dataset_config.load(os.path.join(parser.config_dir, 'dataset_config.json'))
         model_config = ModelConfig()
-        model_config.load(os.path.join(parser.config_dir, 'model_config.json'))
         train_config = TrainConfig()
-        train_config.load(os.path.join(parser.config_dir, 'train_config.json'))
+        model_config.load(os.path.join(args.config_dir, 'model_config.json'))
+        dataset_config.load(os.path.join(args.config_dir, 'dataset_config.json'))
+        train_config.load(os.path.join(args.config_dir, 'train_config.json'))
 
     for cfg in (dataset_config, model_config, train_config):
         for key, value in vars(args).items():
-            setattr(cfg, key, value)
+            if hasattr(cfg, key):
+                setattr(cfg, key, value)
 
     trainer = Trainer(dataset_config, model_config, train_config)
     if args.load_from:
@@ -203,8 +242,7 @@ if __name__ == '__main__':
         trainer.model.load_model(model_path)
         print('Model loaded from:', model_path)
 
-    trainer.train(train_config.num_epochs)
-    acc, ap = trainer.validate()
-    print('Validation Acc:', acc, 'Validation AP:', ap)
-    trainer.model.save_model(model_config.model_name + '.pth')
-    print('Model saved to:', model_config.model_name + '.pth')
+    trainer.train()
+    acc = trainer.validate()
+    print('Validation Acc:', acc)
+    trainer.save()

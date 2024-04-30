@@ -1,2 +1,4 @@
 config
 checkpoints
+data
+__pycache__

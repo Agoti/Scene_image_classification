@@ -38,9 +38,14 @@ class ConvPoolBlock(nn.Module):
         # Normalization layer
         if norm_layer == 'batch_norm':
             self.norm = nn.BatchNorm2d(out_channels)
-        elif norm_layer.startswith('local_response_norm'):
-            size = int(norm_layer.split('_')[-1])
+        elif norm_layer and norm_layer.startswith('local_response_norm'):
+            size = norm_layer.split('_')[-1]
+            size = int(size) if size.isdigit() else 5
             self.norm = nn.LocalResponseNorm(size)
+        elif norm_layer and norm_layer.startswith('dropout'):
+            prob = norm_layer.split('_')[-1]
+            prob = float(prob) if prob.isdigit() else 0.5
+            self.norm = nn.Dropout(prob)
         else:
             self.norm = None
         
@@ -84,8 +89,10 @@ class LinearBlock(nn.Module):
         # Normalization layer
         if norm_layer == 'batch_norm':
             self.norm = nn.BatchNorm1d(out_features)
-        elif norm_layer == 'dropout':
-            self.norm = nn.Dropout()
+        elif norm_layer and norm_layer.startswith('dropout'):
+            prob = norm_layer.split('_')[-1]
+            prob = float(prob) if prob.isdigit() else 0.5
+            self.norm = nn.Dropout(prob)
         else:
             self.norm = None
         
@@ -109,18 +116,18 @@ class AlexNet(nn.Module):
         super(AlexNet, self).__init__()
 
         self.features = nn.Sequential(
-            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm', activation='relu'),
-            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm', activation='relu'),
-            ConvPoolBlock(192, 384, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer='batch_norm', activation='relu'),
-            ConvPoolBlock(384, 256, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer='batch_norm', activation='relu'),
-            ConvPoolBlock(256, 256, kernel_size=3, stride=1, padding=1, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu')
+            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer=None, activation='relu'),
+            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer=None, activation='relu'),
+            ConvPoolBlock(192, 384, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
+            ConvPoolBlock(384, 256, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
+            ConvPoolBlock(256, 256, kernel_size=3, stride=1, padding=1, pool_layer='max_pool', pool_size=3, norm_layer=None, activation='relu')
         )
 
         self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
 
         self.classifier = nn.Sequential(
-            LinearBlock(256 * 6 * 6, 4096, norm_layer='batch_norm', activation='relu'),
-            LinearBlock(4096, 1024, norm_layer='batch_norm', activation='relu'),
+            LinearBlock(256 * 6 * 6, 4096, norm_layer='dropout', activation='relu'),
+            LinearBlock(4096, 1024, norm_layer='dropout', activation='relu'),
             nn.Linear(1024, num_classes)
         )
 

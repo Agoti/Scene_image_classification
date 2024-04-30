@@ -1,5 +1,8 @@
+
+numpy
 torch
 torchvision
-numpy
-scikit-learn
+tqdm
 opencv-python
+scikit-learn
+
