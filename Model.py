@@ -146,8 +146,8 @@ class AlexNet(nn.Module):
     def save_model(self, path):
         torch.save(self.state_dict(), path)
     
-    def load_model(self, path, map_location=None):
-        self.load_state_dict(torch.load(path), map_location=map_location, strict=False)
+    def load_model(self, path):
+        self.load_state_dict(torch.load(path), strict=False)
 
 if __name__ == '__main__':
     model = AlexNet()
