@@ -100,10 +100,10 @@ class Test:
     
     def evaluate(self):
         all_preds, all_labels = self.test()
-        y_pred = torch.argmax(all_preds, dim=1)
-        y_true = all_labels
+        y_pred = torch.argmax(all_preds, dim=1).cpu().numpy()
+        y_true = all_labels.cpu().numpy()
         metrics = self.metrics.compute(y_true, y_pred)
-        self.metrics.save(self.result_path)
+        self.metrics.save(os.path.join(self.result_path, 'metrics_test.json'))
         return metrics['overall']['accuracy']
 
 if __name__ == '__main__':
