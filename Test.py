@@ -4,14 +4,16 @@ import os
 import random
 import argparse
 import tqdm
-from Model import AlexNet
+from Model.AlexNet import AlexNet
 from Dataset import SceneDataset
 from Config import DatasetConfig, ModelConfig, TrainConfig
+from Metrics import Metrics
 
 class Test:
     
     def __init__(self, 
              checkpoint_path,
+             result_path=None,
              checkpoint_epoch=None, 
              batch_size=32, 
              device='cuda'):
@@ -38,6 +40,10 @@ class Test:
 
         # Build dataset
         self.test_dataset = self.build_dataset(self.dataset_config)
+
+        # Build metrics
+        self.result_path = result_path
+        self.metrics = Metrics(['all'])
 
         # Build dataloader
         self.batch_size = batch_size
@@ -94,18 +100,26 @@ class Test:
     
     def evaluate(self):
         all_preds, all_labels = self.test()
-        accuracy = (all_preds.argmax(dim=1) == all_labels).float().mean()
-        return accuracy
+        y_pred = torch.argmax(all_preds, dim=1)
+        y_true = all_labels
+        metrics = self.metrics.compute(y_true, y_pred)
+        self.metrics.save(self.result_path)
+        return metrics['overall']['accuracy']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint_path', type=str, required=True)
+    parser.add_argument('--result_path', type=str, default=None)
     parser.add_argument('--checkpoint_epoch', type=int, default=None)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--device', type=str, default='cuda')
     args = parser.parse_args()
 
-    tester = Test(args.checkpoint_path, args.checkpoint_epoch, args.batch_size, args.device)
+    tester = Test(args.checkpoint_path,
+                  args.result_path,
+                  args.checkpoint_epoch,
+                  args.batch_size,
+                  args.device)
     accuracy = tester.evaluate()
     print(f'Accuracy: {accuracy:.4f}')
         

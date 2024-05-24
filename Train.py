@@ -4,10 +4,10 @@ import numpy as np
 import random
 import argparse
 import tqdm
-from Model import AlexNet
+from Model.AlexNet import AlexNet
 from Dataset import SceneDataset
 from Config import DatasetConfig, ModelConfig, TrainConfig
-from sklearn.metrics import accuracy_score, average_precision_score
+from Metrics import Metrics
 
 class Trainer:
 
@@ -53,6 +53,9 @@ class Trainer:
 
         # Build criterion
         self.criterion = self.build_criterion(train_config)
+
+        # Build metrics
+        self.metrics = Metrics('all')
         
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
@@ -163,13 +166,14 @@ class Trainer:
             if epoch % checkpoint_interval == 0:
                 checkpoint_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}.pth')
                 self.model.save_model(checkpoint_path)
+                metrics_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}_metrics.json')
+                self.metrics.save(metrics_path)
                 print('Checkpoint saved to:', checkpoint_path)
         
         print('Training finished...')
         
     def validate(self):
         self.model.eval()
-        total_correct = 0
         predicted_labels = []
         with torch.no_grad():
             for images, labels in self.val_dataloader:
@@ -179,9 +183,8 @@ class Trainer:
                 predicted_labels.extend(predicted.cpu().numpy())
         
         gt_labels = self.val_dataset.labels
-        acc = accuracy_score(gt_labels, predicted_labels)
-        # ap = average_precision_score(gt_labels, predicted_labels)
-        return acc
+        metrics = self.metrics.compute(gt_labels, predicted_labels)
+        return metrics['overall']['accuracy']
     
     def save(self):
         model_path = os.path.join(self.train_config.checkpoint_dir, self.model_config.model_name + '.pth')
@@ -194,6 +197,8 @@ class Trainer:
         self.model_config.save(os.path.join(config_path, 'model_config.json'))
         self.train_config.save(os.path.join(config_path, 'train_config.json'))
         print('Config saved to:', config_path)
+        metric_path = os.path.join(self.train_config.checkpoint_dir, 'metrics.json')
+        self.metrics.save(metric_path)
 
 if __name__ == '__main__':
 

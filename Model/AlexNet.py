@@ -149,6 +149,21 @@ class AlexNet(nn.Module):
     def load_model(self, path):
         self.load_state_dict(torch.load(path), strict=False)
 
+class AlexNetNorm(AlexNet):
+
+    # different normalization layers
+    def __init__(self,
+                num_classes=6):
+        super(AlexNetNorm, self).__init__()
+
+        self.features = nn.Sequential(
+            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm_5', activation='relu'),
+            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm_5', activation='relu'),
+            ConvPoolBlock(192, 384, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
+            ConvPoolBlock(384, 256, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
+            ConvPoolBlock(256, 256, kernel_size=3, stride=1, padding=1, pool_layer='max_pool', pool_size=3, norm_layer=None, activation='relu')
+        )
+
 if __name__ == '__main__':
     model = AlexNet()
     print(model)
