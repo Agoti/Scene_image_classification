@@ -1,15 +1,26 @@
+# Train.py: Train the model
+# Description: This file is used to train the model.
+# Author: Mingxiao Liu
+
 import os
 import torch
 import numpy as np
 import random
 import argparse
 import tqdm
-from Model.AlexNet import AlexNet
-from Dataset import SceneDataset
+from Utils import Utils
 from Config import DatasetConfig, ModelConfig, TrainConfig
 from Metrics import Metrics
 
 class Trainer:
+    '''
+    Trainer class
+    Methods:
+        train_one_epoch: Train the model for one epoch
+        train: Train the model
+        validate: Validate the model
+        save: Save the model
+    '''
 
     def __init__(self,
                  dataset_config,
@@ -17,7 +28,7 @@ class Trainer:
                  train_config):
         
         # Set random seed
-        self.set_seed(train_config.seed)
+        Utils.set_seed(train_config.seed)
         
         # Store configs
         self.dataset_config = dataset_config
@@ -31,138 +42,109 @@ class Trainer:
         
         # Build dataset and dataloader
         print('Building dataset and dataloader...')
-        self.train_dataset, self.val_dataset = self.build_dataset(dataset_config)
+        self.train_dataset, self.val_dataset = Utils.build_train_val_dataset(dataset_config)
         print('Length of train dataset:', len(self.train_dataset))
         print('Length of val dataset:', len(self.val_dataset))
         print('-' * 50)
 
         # Build dataloader
-        self.train_dataloader = self.build_dataloader(self.train_dataset, train_config.batch_size)
-        self.val_dataloader = self.build_dataloader(self.val_dataset, train_config.batch_size, shuffle=False)
+        self.train_dataloader = Utils.build_dataloader(self.train_dataset, train_config.batch_size, shuffle=True)
+        self.val_dataloader = Utils.build_dataloader(self.val_dataset, train_config.batch_size, shuffle=False)
         print('Finish building dataloader...')
 
         # Build model
         print('Building model...')
-        self.model = self.build_model(model_config)
-        # print('Model:')
-        # print(self.model)
-        # print('-' * 50)
+        self.model = Utils.build_model(model_config)
+        print('Model:' + model_config.model_name)
 
-        # Build optimizer
-        self.optimizer, self.scheduler = self.build_optimizer(train_config, self.model)
+        # Build optimizer and scheduler
+        self.optimizer, self.scheduler = Utils.build_optimizer_scheduler(train_config, self.model)
 
         # Build criterion
-        self.criterion = self.build_criterion(train_config)
+        self.criterion = Utils.build_criterion(train_config)
 
         # Build metrics
         self.metrics = Metrics('all')
         
+        # Set device
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
-    
-    def set_seed(self, seed):
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-    
-    @staticmethod
-    def build_model(model_config):
 
-        if model_config.model_name == 'alexnet':
-            model = AlexNet()
-        else:
-            raise ValueError('Invalid model name')
-        
-        return model
-    
-    @staticmethod
-    def build_dataset(dataset_config):
-        image_dir = os.path.join(dataset_config.data_dir, 'imgs')
-        train_annotation_path = os.path.join(dataset_config.data_dir, 'train_data.csv')
-        val_annotation_path = os.path.join(dataset_config.data_dir, 'val_data.csv')
-        train_dataset = SceneDataset(train_annotation_path,
-                                     image_dir,
-                                     split='train',
-                                     transform_name=dataset_config.transform_name,
-                                     max_data_num=dataset_config.max_data_num)
-        
-        val_dataset = SceneDataset(val_annotation_path,
-                                   image_dir,
-                                   split='val',
-                                   transform_name=dataset_config.transform_name,
-                                   max_data_num=dataset_config.max_data_num)
-        
-        return train_dataset, val_dataset
-    
-    @staticmethod
-    def build_dataloader(dataset, batch_size, shuffle=True):
-        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
-    
-    @staticmethod
-    def build_transform():
-        return None
-    
-    @staticmethod
-    def build_optimizer(train_config, model):
-
-        if train_config.optimizer == 'adam':
-            optimizer = torch.optim.Adam(model.parameters())
-        else:
-            raise ValueError('Invalid optimizer name')
-        
-        if train_config.scheduler == 'step':
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-        else:
-            scheduler = None
-        
-        return optimizer, scheduler
-    
-    @staticmethod
-    def build_criterion(train_config):
-        if train_config.criterion == 'cross_entropy':
-            criterion = torch.nn.CrossEntropyLoss()
-        else:
-            raise ValueError('Invalid criterion name')
-        
-        return criterion
 
     def train_one_epoch(self):
+        '''
+        Train the model for one epoch
+        '''
+
+        # Set the model to train mode
         self.model.train()
+
+        # Initialize the total loss
         total_loss = 0
+
+        # Iterate over the dataloader
         with tqdm.tqdm(self.train_dataloader, desc='Training') as t:
+
+            # Iterate over the minibatches
             for images, labels in t:
+
+                # Move data to device
                 images, labels = images.to(self.device), labels.to(self.device)
+                
+                # Zero the gradients
                 self.optimizer.zero_grad()
+
+                # Forward pass
                 outputs = self.model(images)
+
+                # Compute the loss
                 loss = self.criterion(outputs, labels)
+
+                # Backward pass
                 loss.backward()
+
+                # Update the weights
                 self.optimizer.step()
+
+                # Update the total loss
                 total_loss += loss.item()
+
+                # Update the progress bar
                 t.set_postfix({'loss': total_loss / len(self.train_dataset)})
 
+        # Return the average loss and the learning rate
         return total_loss / len(self.train_dataset), self.optimizer.param_groups[0]['lr']
+
     
     def train(self):
+        '''
+        Train the model
+        '''
 
+        # Set up the checkpoint directory
         checkpoint_interval = self.train_config.checkpoint_interval
         checkpoint_dir = self.train_config.checkpoint_dir
         checkpoint_subdir = os.path.join(checkpoint_dir, 'checkpoint')
-
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
-        
         if not os.path.exists(checkpoint_subdir):
             os.makedirs(checkpoint_subdir)
 
-        self.model.train()
+        # Train the model
         for epoch in range(1, self.train_config.num_epochs + 1):
+
+            # Train one epoch
             loss, lr = self.train_one_epoch()
+
+            # Update the scheduler
+            if self.scheduler:
+                self.scheduler.step()
+
+            # Validate
             acc = self.validate()
-            print('Epoch:', epoch, 'Loss: %.4f' % loss, 'Acc: %.4f' % acc, 'LR:', lr)
+            print('Epoch:', epoch, 'Loss: %.4f' % loss, 'Val acc: %.4f' % acc, 'LR:', lr)
+
+            # Save checkpoint
             if epoch % checkpoint_interval == 0:
                 checkpoint_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}.pth')
                 self.model.save_model(checkpoint_path)
@@ -171,9 +153,17 @@ class Trainer:
                 print('Checkpoint saved to:', checkpoint_path)
         
         print('Training finished...')
+
         
     def validate(self):
+        '''
+        Validate the model
+        '''
+
+        # Set the model to eval mode
         self.model.eval()
+
+        # Predict the labels
         predicted_labels = []
         with torch.no_grad():
             for images, labels in self.val_dataloader:
@@ -181,15 +171,25 @@ class Trainer:
                 outputs = self.model(images)
                 _, predicted = torch.max(outputs, 1)
                 predicted_labels.extend(predicted.cpu().numpy())
-        
+
+        # Compute the metrics        
         gt_labels = self.val_dataset.labels
         metrics = self.metrics.compute(gt_labels, predicted_labels)
+
         return metrics['overall']['accuracy']
+
     
     def save(self):
+        '''
+        Save the model after training
+        '''
+
+        # Save the model
         model_path = os.path.join(self.train_config.checkpoint_dir, self.model_config.model_name + '.pth')
         self.model.save_model(model_path)
         print('Model saved to:', model_path)
+
+        # Save the configs
         config_path = os.path.join(self.train_config.checkpoint_dir, 'config')
         if not os.path.exists(config_path):
             os.makedirs(config_path)
@@ -197,11 +197,14 @@ class Trainer:
         self.model_config.save(os.path.join(config_path, 'model_config.json'))
         self.train_config.save(os.path.join(config_path, 'train_config.json'))
         print('Config saved to:', config_path)
+
+        # Save the metrics
         metric_path = os.path.join(self.train_config.checkpoint_dir, 'metrics.json')
         self.metrics.save(metric_path)
 
 if __name__ == '__main__':
 
+    # Parse the arguments. The configuration files are loaded from the config directory by default, but can be overridden by the command line arguments.
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data')
     parser.add_argument('--config_dir', type=str, default='./config')
@@ -221,6 +224,7 @@ if __name__ == '__main__':
     parser.add_argument('--load_from', type=str, default=None)
     args = parser.parse_args()
     
+    # If the model is loaded from a checkpoint, load the configs from the checkpoint directory. Otherwise, load the configs from the config directory.
     if args.load_from:
         dataset_config = DatasetConfig()
         model_config = ModelConfig()
@@ -236,17 +240,22 @@ if __name__ == '__main__':
         dataset_config.load(os.path.join(args.config_dir, 'dataset_config.json'))
         train_config.load(os.path.join(args.config_dir, 'train_config.json'))
 
+    # Override the configs with the command line arguments
     for cfg in (dataset_config, model_config, train_config):
         for key, value in vars(args).items():
             if hasattr(cfg, key):
                 setattr(cfg, key, value)
 
+    # Create the trainer
     trainer = Trainer(dataset_config, model_config, train_config)
+
+    # Load the model from the checkpoint if specified
     if args.load_from:
         model_path = os.path.join(args.load_from, model_config.model_name + '.pth')
         trainer.model.load_model(model_path)
         print('Model loaded from:', model_path)
 
+    # Train the model
     trainer.train()
     acc = trainer.validate()
     print('Validation Acc:', acc)
