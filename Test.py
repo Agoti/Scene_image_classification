@@ -74,6 +74,7 @@ class Test:
         Predict the results
         '''
 
+        print('Predicting...')
         # Set the model to evaluation mode
         self.model.eval()
 
@@ -99,6 +100,7 @@ class Test:
         Evaluate the model
         '''
 
+        print('Evaluating...')
         # Predict the results
         all_preds, all_labels = self.predict()
         y_pred = torch.argmax(all_preds, dim=1).cpu().numpy()

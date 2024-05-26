@@ -6,6 +6,7 @@ import os
 import random
 import numpy
 import torch
+import sklearn.utils
 from Model.AlexNet import AlexNet, AlexNetNorm, AlexNetPretrained
 from Dataset import SceneDataset
 from Config import DatasetConfig, ModelConfig, TrainConfig
@@ -34,6 +35,8 @@ class Utils:
         torch.cuda.manual_seed_all(seed)
         numpy.random.seed(seed)
         random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        sklearn.utils.check_random_state(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
@@ -89,8 +92,8 @@ class Utils:
         return test_dataset
     
     @staticmethod
-    def build_dataloader(dataset, batch_size, shuffle=True):
-        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    def build_dataloader(dataset, batch_size, shuffle=True, seed = 0):
+        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, worker_init_fn=Utils.set_seed(seed))
     
     @staticmethod
     def build_transform():
@@ -99,15 +102,29 @@ class Utils:
     @staticmethod
     def build_optimizer_scheduler(train_config, model):
 
-        if train_config.optimizer == 'adam':
-            optimizer = torch.optim.Adam(model.parameters())
+        # Optimizer and scheduler names
+        optimizer_name = train_config.optimizer
+        scheduler_name = train_config.scheduler
+
+        # Optimizer dictionary
+        optimizer_dict = {
+            'adam': torch.optim.Adam,
+            'sgd': torch.optim.SGD
+        }
+        
+        # Build optimizer and scheduler
+        if optimizer_name in optimizer_dict:
+            optimizer = optimizer_dict[optimizer_name](model.parameters(), lr=train_config.learning_rate, weight_decay=train_config.weight_decay)
         else:
             raise ValueError('Invalid optimizer name')
         
-        if train_config.scheduler == 'step':
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-        else:
+        # When build scheduler, I use this way of implementation because each scheduler has different parameters. I don't want to change the train_config.py file again and again.
+        if not scheduler_name or scheduler_name == 'none':
             scheduler = None
+        elif scheduler_name == 'step':
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=train_config.step_size, gamma=train_config.gamma)
+        else:
+            raise ValueError('Invalid scheduler name')
         
         return optimizer, scheduler
     

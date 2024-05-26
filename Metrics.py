@@ -108,7 +108,10 @@ class Metrics:
                     y_pred_c = np.where(y_pred == c, 1, 0)
                     if name not in self.results['detailed']:
                         self.results['detailed'][name] = {}
-                    self.results['detailed'][name][c] = metric_fn(y_true_c, y_pred_c)
+                    if name == 'precision':
+                        self.results['detailed'][name][c] = metric_fn(y_true_c, y_pred_c, zero_division=0)
+                    else:
+                        self.results['detailed'][name][c] = metric_fn(y_true_c, y_pred_c)
                 
                 # overall metrics
                 # accuracy: overall accuracy
@@ -121,9 +124,10 @@ class Metrics:
         # verify
         # NOTE: used for testing the correctness of my implementation. will be removed in the final version
         cm = confusion_matrix(y_true, y_pred)
-        precisions = np.diag(cm) / np.sum(cm, axis=0)
-        recalls = np.diag(cm) / np.sum(cm, axis=1)
-        f1s = 2 * precisions * recalls / (precisions + recalls)
+        eps = 1e-10
+        precisions = np.diag(cm) / (np.sum(cm, axis=0) + eps)
+        recalls = np.diag(cm) / (np.sum(cm, axis=1) + eps)
+        f1s = 2 * precisions * recalls / (precisions + recalls + eps)
         self.results['verify'] = {}
         self.results['verify']['accuracy'] = accuracy_score(y_true, y_pred)
         self.results['verify']['precision'] = np.mean(precisions)
@@ -146,4 +150,4 @@ class Metrics:
             # neat json output
             json.dump(self.results, f, indent=4)
 
-        print(f'Saved metrics to {path}')
+        print(f'Metrics: {path} saved')

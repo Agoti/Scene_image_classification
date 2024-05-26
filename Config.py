@@ -22,12 +22,14 @@ class Config:
     def save(self, path):
         with open(path, 'w') as f:
             json.dump(self.__dict__, f)
+        print("Config: Save config to {}".format(path))
     
     def load(self, path):
         with open(path, 'r') as f:
             config = json.load(f)
         for key, value in config.items():
             setattr(self, key, value)
+        print("Config: Load config from {}".format(path))
 
 class DatasetConfig(Config):
     '''

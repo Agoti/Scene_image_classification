@@ -1,0 +1,95 @@
+Config: Load config from ./config/model_config.json
+Config: Load config from ./config/dataset_config.json
+Config: Load config from ./config/train_config.json
+Configs:
+Dataset config: {'data_dir': './data', 'transform_name': 'default', 'max_data_num': inf}
+Model config: {'model_name': 'alexnet_norm'}
+Train config: {'optimizer': 'adam', 'scheduler': 'step', 'criterion': 'cross_entropy', 'device': 'cuda', 'num_epochs': 50, 'batch_size': 32, 'learning_rate': 0.001, 'weight_decay': 0.0, 'step_size': 10, 'gamma': 0.1, 'checkpoint_interval': 10, 'checkpoint_dir': 'checkpoints/AlexNetNorm_step_lr_0526_50', 'seed': 0}
+--------------------------------------------------
+Building dataset and dataloader...
+Dataset: Loading data from ./data/train_data.csv...
+Dataset: Loading data from ./data/val_data.csv...
+Length of train dataset: 10901
+Length of val dataset: 2726
+--------------------------------------------------
+Finish building dataloader...
+Building model...
+Model:alexnet_norm
+--------------------------------------------------
+Augmentation: OFF
+Learning rate: 0.001 ; Batch size: 32 ; Scheduler: step
+Optimizer: adam
+Normalization: ON
+--------------------------------------------------
+Epoch: 1 Loss: 1.4748 Val acc: 0.5418 LR: 0.001
+Epoch: 2 Loss: 1.0903 Val acc: 0.6530 LR: 0.001
+Epoch: 3 Loss: 0.9619 Val acc: 0.6787 LR: 0.001
+Epoch: 4 Loss: 0.8815 Val acc: 0.6141 LR: 0.001
+Epoch: 5 Loss: 0.8078 Val acc: 0.7168 LR: 0.001
+Epoch: 6 Loss: 0.7762 Val acc: 0.6882 LR: 0.001
+Epoch: 7 Loss: 0.7318 Val acc: 0.7498 LR: 0.001
+Epoch: 8 Loss: 0.6529 Val acc: 0.7018 LR: 0.001
+Epoch: 9 Loss: 0.6316 Val acc: 0.7399 LR: 0.001
+Epoch: 10 Loss: 0.6048 Val acc: 0.7663 LR: 0.001
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_10.pth
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_10_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_10.pth
+Epoch: 11 Loss: 0.4481 Val acc: 0.7938 LR: 0.0001
+Epoch: 12 Loss: 0.3848 Val acc: 0.7964 LR: 0.0001
+Epoch: 13 Loss: 0.3554 Val acc: 0.7913 LR: 0.0001
+Epoch: 14 Loss: 0.3193 Val acc: 0.7931 LR: 0.0001
+Epoch: 15 Loss: 0.2953 Val acc: 0.7957 LR: 0.0001
+Epoch: 16 Loss: 0.2654 Val acc: 0.7905 LR: 0.0001
+Epoch: 17 Loss: 0.2392 Val acc: 0.7920 LR: 0.0001
+Epoch: 18 Loss: 0.2173 Val acc: 0.7883 LR: 0.0001
+Epoch: 19 Loss: 0.1907 Val acc: 0.7850 LR: 0.0001
+Epoch: 20 Loss: 0.1671 Val acc: 0.7810 LR: 0.0001
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_20.pth
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_20_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_20.pth
+Epoch: 21 Loss: 0.1323 Val acc: 0.7792 LR: 1e-05
+Epoch: 22 Loss: 0.1264 Val acc: 0.7803 LR: 1e-05
+Epoch: 23 Loss: 0.1261 Val acc: 0.7788 LR: 1e-05
+Epoch: 24 Loss: 0.1192 Val acc: 0.7792 LR: 1e-05
+Epoch: 25 Loss: 0.1152 Val acc: 0.7795 LR: 1e-05
+Epoch: 26 Loss: 0.1151 Val acc: 0.7773 LR: 1e-05
+Epoch: 27 Loss: 0.1123 Val acc: 0.7755 LR: 1e-05
+Epoch: 28 Loss: 0.1076 Val acc: 0.7766 LR: 1e-05
+Epoch: 29 Loss: 0.1052 Val acc: 0.7770 LR: 1e-05
+Epoch: 30 Loss: 0.1023 Val acc: 0.7777 LR: 1e-05
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_30.pth
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_30_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_30.pth
+Epoch: 31 Loss: 0.0998 Val acc: 0.7770 LR: 1.0000000000000002e-06
+Epoch: 32 Loss: 0.0969 Val acc: 0.7766 LR: 1.0000000000000002e-06
+Epoch: 33 Loss: 0.0992 Val acc: 0.7770 LR: 1.0000000000000002e-06
+Epoch: 34 Loss: 0.0987 Val acc: 0.7773 LR: 1.0000000000000002e-06
+Epoch: 35 Loss: 0.0980 Val acc: 0.7773 LR: 1.0000000000000002e-06
+Epoch: 36 Loss: 0.1003 Val acc: 0.7773 LR: 1.0000000000000002e-06
+Epoch: 37 Loss: 0.0965 Val acc: 0.7770 LR: 1.0000000000000002e-06
+Epoch: 38 Loss: 0.0980 Val acc: 0.7781 LR: 1.0000000000000002e-06
+Epoch: 39 Loss: 0.0964 Val acc: 0.7777 LR: 1.0000000000000002e-06
+Epoch: 40 Loss: 0.0975 Val acc: 0.7759 LR: 1.0000000000000002e-06
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_40.pth
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_40_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_40.pth
+Epoch: 41 Loss: 0.0952 Val acc: 0.7759 LR: 1.0000000000000002e-07
+Epoch: 42 Loss: 0.0950 Val acc: 0.7766 LR: 1.0000000000000002e-07
+Epoch: 43 Loss: 0.0967 Val acc: 0.7766 LR: 1.0000000000000002e-07
+Epoch: 44 Loss: 0.0948 Val acc: 0.7766 LR: 1.0000000000000002e-07
+Epoch: 45 Loss: 0.0960 Val acc: 0.7766 LR: 1.0000000000000002e-07
+Epoch: 46 Loss: 0.0965 Val acc: 0.7770 LR: 1.0000000000000002e-07
+Epoch: 47 Loss: 0.0974 Val acc: 0.7770 LR: 1.0000000000000002e-07
+Epoch: 48 Loss: 0.0965 Val acc: 0.7770 LR: 1.0000000000000002e-07
+Epoch: 49 Loss: 0.0969 Val acc: 0.7766 LR: 1.0000000000000002e-07
+Epoch: 50 Loss: 0.0937 Val acc: 0.7770 LR: 1.0000000000000002e-07
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_50.pth
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_50_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNetNorm_step_lr_0526_50/checkpoint/alexnet_norm_epoch_50.pth
+Training finished...
+Validation Acc: 0.776962582538518
+AlexNet: Saving model to checkpoints/AlexNetNorm_step_lr_0526_50/alexnet_norm.pth
+Config: Save config to checkpoints/AlexNetNorm_step_lr_0526_50/config/dataset_config.json
+Config: Save config to checkpoints/AlexNetNorm_step_lr_0526_50/config/model_config.json
+Config: Save config to checkpoints/AlexNetNorm_step_lr_0526_50/config/train_config.json
+Metrics: checkpoints/AlexNetNorm_step_lr_0526_50/metrics.json saved

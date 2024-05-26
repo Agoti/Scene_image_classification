@@ -209,10 +209,12 @@ class AlexNet(Model):
     
 
     def save_model(self, path):
+        print("AlexNet: Saving model to", path)
         torch.save(self.state_dict(), path)
     
 
     def load_model(self, path):
+        print("AlexNet: Loading model from", path)
         self.load_state_dict(torch.load(path), strict=False)
 
 

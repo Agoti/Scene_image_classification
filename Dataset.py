@@ -4,6 +4,7 @@
 
 from torch.utils.data import Dataset
 from torchvision import transforms
+import tqdm
 import os
 import cv2
 import numpy as np
@@ -18,6 +19,12 @@ class SceneDataset(Dataset):
         load_data: Load the data from the annotation file
         __len__: Get the length of the dataset
         __getitem__: Get the item of the dataset
+    Attributes:
+        images: The list of the images(list of np.ndarray)
+        labels: The list of the labels(list of int)
+        split: The split of the dataset. Train, val, test, ...
+        transform: The transform of the dataset. Resize, to tensor, augmentation, ...
+        max_data_num: The maximum number of the data. Set to a small number for debugging. 
     '''
 
     def __init__(self,
@@ -79,13 +86,14 @@ class SceneDataset(Dataset):
             image_dir: The directory of the images
         '''
         
+        print(f'Dataset: Loading data from {annotation_path}...')
         # Read annotation file(csv file)
         with open(annotation_path, 'r') as f:
             lines = f.readlines()
 
         # Load image and label
         # Skip the first line because it is the header
-        for i, line in enumerate(lines[1:]):
+        for i, line in enumerate(tqdm.tqdm(lines[1:])):
 
             # If the number of data is greater than the max_data_num, break
             if i >= self.max_data_num:

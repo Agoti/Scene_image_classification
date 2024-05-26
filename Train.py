@@ -48,8 +48,8 @@ class Trainer:
         print('-' * 50)
 
         # Build dataloader
-        self.train_dataloader = Utils.build_dataloader(self.train_dataset, train_config.batch_size, shuffle=True)
-        self.val_dataloader = Utils.build_dataloader(self.val_dataset, train_config.batch_size, shuffle=False)
+        self.train_dataloader = Utils.build_dataloader(self.train_dataset, train_config.batch_size, shuffle=True, seed = train_config.seed)
+        self.val_dataloader = Utils.build_dataloader(self.val_dataset, train_config.batch_size, shuffle=False, seed = train_config.seed)
         print('Finish building dataloader...')
 
         # Build model
@@ -64,11 +64,19 @@ class Trainer:
         self.criterion = Utils.build_criterion(train_config)
 
         # Build metrics
-        self.metrics = Metrics('all')
+        self.metrics = Metrics(['all'])
         
         # Set device
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
+
+        # Print options
+        print('-' * 50)
+        print('Augmentation:', 'ON' if dataset_config.transform_name == 'augmentation' else 'OFF')
+        print('Learning rate:', train_config.learning_rate, '; Batch size:', train_config.batch_size, '; Scheduler:', train_config.scheduler)
+        print('Optimizer:', train_config.optimizer)
+        print('Normalization:', 'ON' if model_config.model_name == 'alexnet_norm' else 'OFF')
+        print('-' * 50)
 
 
     def train_one_epoch(self):
@@ -86,7 +94,7 @@ class Trainer:
         with tqdm.tqdm(self.train_dataloader, desc='Training') as t:
 
             # Iterate over the minibatches
-            for images, labels in t:
+            for i, (images, labels) in enumerate(t): 
 
                 # Move data to device
                 images, labels = images.to(self.device), labels.to(self.device)
@@ -110,10 +118,10 @@ class Trainer:
                 total_loss += loss.item()
 
                 # Update the progress bar
-                t.set_postfix({'loss': total_loss / len(self.train_dataset)})
+                t.set_postfix({'loss': total_loss / (i + 1)})
 
         # Return the average loss and the learning rate
-        return total_loss / len(self.train_dataset), self.optimizer.param_groups[0]['lr']
+        return total_loss / len(self.train_dataloader), self.optimizer.param_groups[0]['lr']
 
     
     def train(self):
@@ -148,6 +156,8 @@ class Trainer:
             if epoch % checkpoint_interval == 0:
                 checkpoint_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}.pth')
                 self.model.save_model(checkpoint_path)
+                optimizer_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}_optimizer.pth')
+                torch.save(self.optimizer.state_dict(), optimizer_path)
                 metrics_path = os.path.join(checkpoint_subdir, f'{self.model_config.model_name}_epoch_{epoch}_metrics.json')
                 self.metrics.save(metrics_path)
                 print('Checkpoint saved to:', checkpoint_path)
@@ -174,6 +184,9 @@ class Trainer:
 
         # Compute the metrics        
         gt_labels = self.val_dataset.labels
+        # Convert predicted labels and gt labels to numpy array
+        predicted_labels = np.array(predicted_labels)
+        gt_labels = np.array(gt_labels)
         metrics = self.metrics.compute(gt_labels, predicted_labels)
 
         return metrics['overall']['accuracy']
@@ -187,7 +200,10 @@ class Trainer:
         # Save the model
         model_path = os.path.join(self.train_config.checkpoint_dir, self.model_config.model_name + '.pth')
         self.model.save_model(model_path)
-        print('Model saved to:', model_path)
+
+        # Save the optimizer
+        optimizer_path = os.path.join(self.train_config.checkpoint_dir, self.model_config.model_name + '_optimizer.pth')
+        torch.save(self.optimizer.state_dict(), optimizer_path)
 
         # Save the configs
         config_path = os.path.join(self.train_config.checkpoint_dir, 'config')
@@ -196,7 +212,6 @@ class Trainer:
         self.dataset_config.save(os.path.join(config_path, 'dataset_config.json'))
         self.model_config.save(os.path.join(config_path, 'model_config.json'))
         self.train_config.save(os.path.join(config_path, 'train_config.json'))
-        print('Config saved to:', config_path)
 
         # Save the metrics
         metric_path = os.path.join(self.train_config.checkpoint_dir, 'metrics.json')
@@ -253,6 +268,8 @@ if __name__ == '__main__':
     if args.load_from:
         model_path = os.path.join(args.load_from, model_config.model_name + '.pth')
         trainer.model.load_model(model_path)
+        optimizer_path = os.path.join(args.load_from, model_config.model_name + '_optimizer.pth')
+        trainer.optimizer.load_state_dict(torch.load(optimizer_path))
         print('Model loaded from:', model_path)
 
     # Train the model
