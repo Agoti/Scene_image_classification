@@ -71,13 +71,15 @@ class Utils:
                                      image_dir,
                                      split='train',
                                      transform_name=dataset_config.transform_name,
-                                     max_data_num=dataset_config.max_data_num)
+                                     max_data_num=dataset_config.max_data_num, 
+                                     removed_classes=dataset_config.removed_classes)
         
         val_dataset = SceneDataset(val_annotation_path,
                                    image_dir,
                                    split='val',
                                    transform_name=dataset_config.transform_name,
-                                   max_data_num=dataset_config.max_data_num)
+                                   max_data_num=dataset_config.max_data_num, 
+                                   removed_classes=dataset_config.removed_classes)
         
         return train_dataset, val_dataset
     
@@ -88,7 +90,8 @@ class Utils:
                                     image_dir,
                                     split='test',
                                     transform_name=dataset_config.transform_name,
-                                    max_data_num=dataset_config.max_data_num)
+                                    max_data_num=dataset_config.max_data_num, 
+                                    removed_classes=dataset_config.removed_classes)
 
         return test_dataset
     

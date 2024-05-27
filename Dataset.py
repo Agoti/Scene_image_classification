@@ -17,6 +17,7 @@ class SceneDataset(Dataset):
         __init__: Initialize the dataset
         build_transform: (Static method) Build the transform for the dataset
         load_data: Load the data from the annotation file
+        get_nimages_of_classes: Get the number of images of each class
         __len__: Get the length of the dataset
         __getitem__: Get the item of the dataset
     Attributes:
@@ -32,7 +33,8 @@ class SceneDataset(Dataset):
                  image_dir,
                  split='train',
                  transform_name='default',
-                 max_data_num=float('inf')):
+                 max_data_num=float('inf'), 
+                 removed_classes=None):
         '''
         Initialize the dataset
         Args:
@@ -50,7 +52,7 @@ class SceneDataset(Dataset):
         self.split = split
         self.transform = self.build_transform(transform_name, split)
         self.max_data_num = max_data_num
-        self.load_data(annotation_path, image_dir)
+        self.load_data(annotation_path, image_dir, removed_classes)
 
     
     @staticmethod
@@ -80,7 +82,7 @@ class SceneDataset(Dataset):
         return transforms.Compose(transform_list)
 
 
-    def load_data(self, annotation_path, image_dir):
+    def load_data(self, annotation_path, image_dir, removed_classes=None):
         '''
         Load the data from the annotation file
         Args:
@@ -104,11 +106,31 @@ class SceneDataset(Dataset):
             # Get the image name and label
             image_name, label = line.strip().split(',')
 
+            # If the removed_classes is not None, 3 in 4 chance to skip the data
+            if self.split == 'train' and removed_classes and str(label) in removed_classes:
+                if np.random.rand() < 0.75:
+                    continue
+
             # Load the image
             image_path = os.path.join(image_dir, image_name)
             image = cv2.imread(image_path)
             self.images.append(image)
             self.labels.append(int(label))
+    
+
+    def get_nimages_of_classes(self):
+        '''
+        Get the number of images of each class
+        '''
+
+        nimages_of_classes = {}
+        for label in self.labels:
+            if label not in nimages_of_classes:
+                nimages_of_classes[label] = 1
+            else:
+                nimages_of_classes[label] += 1
+        
+        return nimages_of_classes
         
 
     def __len__(self):

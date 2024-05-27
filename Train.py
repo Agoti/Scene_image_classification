@@ -44,6 +44,7 @@ class Trainer:
         print('Building dataset and dataloader...')
         self.train_dataset, self.val_dataset = Utils.build_train_val_dataset(dataset_config)
         print('Length of train dataset:', len(self.train_dataset))
+        print('Number of images in each class:', self.train_dataset.get_nimages_of_classes())
         print('Length of val dataset:', len(self.val_dataset))
         print('-' * 50)
 
@@ -244,6 +245,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--load_from', type=str, default=None)
+    parser.add_argument('--removed_classes', type=str, default=None)
     args = parser.parse_args()
     
     # If the model is loaded from a checkpoint, load the configs from the checkpoint directory. Otherwise, load the configs from the config directory.

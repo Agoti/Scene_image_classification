@@ -44,6 +44,7 @@ class DatasetConfig(Config):
                 data_dir='./data',  
                 transform_name='default', 
                 max_data_num=float('inf'),
+                removed_classes=None,
                 **kwargs):
         for key, value in locals().items():
             if key not in ['self', 'kwargs'] and not key.startswith('_'):

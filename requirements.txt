@@ -2,6 +2,7 @@
 numpy
 torch
 torchvision
+torchcam
 tqdm
 opencv-python
 scikit-learn

@@ -1,5 +1,5 @@
 
-CKPT=AlexNet_0527
+CKPT=AlexNet_0527_rmcls
 
 python3 Train.py \
     --checkpoint_dir=checkpoints/${CKPT} \
@@ -12,4 +12,5 @@ python3 Train.py \
     --weight_decay=0.01 \
     --batch_size=32 \
     --transform_name=augmentation \
+    --removed_classes=123 \
     | tee logs/${CKPT}.txt

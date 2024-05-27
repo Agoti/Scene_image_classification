@@ -123,19 +123,19 @@ class Metrics:
         
         # verify
         # NOTE: used for testing the correctness of my implementation. will be removed in the final version
-        cm = confusion_matrix(y_true, y_pred)
-        eps = 1e-10
-        precisions = np.diag(cm) / (np.sum(cm, axis=0) + eps)
-        recalls = np.diag(cm) / (np.sum(cm, axis=1) + eps)
-        f1s = 2 * precisions * recalls / (precisions + recalls + eps)
-        self.results['verify'] = {}
-        self.results['verify']['accuracy'] = accuracy_score(y_true, y_pred)
-        self.results['verify']['precision'] = np.mean(precisions)
-        self.results['verify']['recall'] = np.mean(recalls)
-        self.results['verify']['f1_score'] = np.mean(f1s)
-        y_true_bin = label_binarize(y_true, classes=classes)
-        y_pred_bin = label_binarize(y_pred, classes=classes)
-        self.results['verify']['auc'] = roc_auc_score(y_true_bin, y_pred_bin, average='macro')
+        # cm = confusion_matrix(y_true, y_pred)
+        # eps = 1e-10
+        # precisions = np.diag(cm) / (np.sum(cm, axis=0) + eps)
+        # recalls = np.diag(cm) / (np.sum(cm, axis=1) + eps)
+        # f1s = 2 * precisions * recalls / (precisions + recalls + eps)
+        # self.results['verify'] = {}
+        # self.results['verify']['accuracy'] = accuracy_score(y_true, y_pred)
+        # self.results['verify']['precision'] = np.mean(precisions)
+        # self.results['verify']['recall'] = np.mean(recalls)
+        # self.results['verify']['f1_score'] = np.mean(f1s)
+        # y_true_bin = label_binarize(y_true, classes=classes)
+        # y_pred_bin = label_binarize(y_pred, classes=classes)
+        # self.results['verify']['auc'] = roc_auc_score(y_true_bin, y_pred_bin, average='macro')
 
         return self.results
     
