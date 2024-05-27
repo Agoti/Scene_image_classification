@@ -3,8 +3,7 @@ import os
 import cv2
 import numpy as np
 import torch
-from torchcam.cams import GradCAM
-from torchcam.utils import overlay_mask
+import torch.nn.functional as F
 from Utils import Utils
 from Config import DatasetConfig, ModelConfig
 
@@ -14,12 +13,14 @@ class Visualize:
     def __init__(self, 
                 checkpoint_path,
                 checkpoint_epoch=None, 
+                max_data_num=10,
                 device='cpu'):
         '''
         Initialize the tester
         Args:
             checkpoint_path: The path of the checkpoint
             checkpoint_epoch: Load the model from a specific epoch milestone
+            max_data_num: The maximum number of the data to visualize
             device: The device to use
         '''
         
@@ -31,8 +32,9 @@ class Visualize:
         self.model_config = ModelConfig()
         self.model_config.load(os.path.join(config_path, 'model_config.json'))
         self.dataset_config = DatasetConfig()
-        self.dataset_config.max_data_num = 10
         self.dataset_config.load(os.path.join(config_path, 'dataset_config.json'))
+        self.dataset_config.max_data_num = max_data_num
+        self.max_data_num = max_data_num
 
         # Build model
         self.model = Utils.build_model(self.model_config)
@@ -43,54 +45,88 @@ class Visualize:
             weight_path = os.path.join(checkpoint_path, f'{self.model_config.model_name}.pth')
 
         # Load the model
-        self.model.load_model(weight_path)
+        self.model.load_model(weight_path, map_location=device)
+        self.device = device
         self.model.to(device)
-        # if torch.cuda.device_count() > 1:
-        #     print(f'Using {torch.cuda.device_count()} GPUs')
-        #     self.model = torch.nn.DataParallel(self.model, device_ids=list(range(torch.cuda.device_count())))
-
+        
         # Build dataset
         self.test_dataset = Utils.build_test_dataset(self.dataset_config)
+        self.dataset_config.transform_name = 'default'
+        self.visual_dataset = Utils.build_test_dataset(self.dataset_config)
 
-        self.test_dataloader = Utils.build_dataloader(self.test_dataset, self.batch_size, shuffle=True)
-    
-    def grad_cam(self, image):
+    def grad_cam(self, image, original_image):
         '''
         Grad-CAM
         Args:
-            image: The image to visualize
+            image: The image input
+            original_image: The original image without normalization
         '''
         
         # Set the model to evaluation mode
         self.model.eval()
 
         # Get the image
-        image = image.to(self.device)
-        image = image.unsqueeze(0)
+        input_tensor = image.unsqueeze(0).to(self.device)
 
-        # Get the Grad-CAM
-        cam = GradCAM(model=self.model)
-        activation_map = cam(image)
-        image = image.squeeze(0).permute(1, 2, 0).cpu().numpy()
-        activation_map = activation_map.squeeze(0).cpu().numpy()
-        heatmap = cv2.applyColorMap(np.uint8(255 * activation_map), cv2.COLORMAP_JET)
-        overlay = overlay_mask(cv2.cvtColor(image, cv2.COLOR_RGB2BGR), heatmap)
+        # Register hooks
+        target_layer = self.model.features[-1].conv
+        activation = None
+        def hook_fn(module, input, output):
+            nonlocal activation
+            activation = output
+        hook = target_layer.register_forward_hook(hook_fn)
 
-        return overlay
+        # Forward the image
+        output = self.model(input_tensor)
+        
+        # Get the predicted label
+        pred_label = output.argmax(1).item()
+
+        # Get the gradient
+        self.model.zero_grad()
+        output[0, pred_label].backward()
+
+        # Get the gradient of the target layer
+        gradients = self.model.features[-1].conv.weight.grad
+        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
+
+        # Apply the gradients
+        for i in range(activation.shape[1]):
+            activation[:, i, :, :] *= pooled_gradients[i]
+
+        # Get the heatmap
+        heatmap = F.relu(torch.sum(activation, dim=1)).squeeze().detach().cpu().numpy()
+        heatmap = np.maximum(heatmap, 0)
+        heatmap /= np.max(heatmap)
+
+        # Overlay the heatmap
+        heatmap = cv2.resize(heatmap, (224, 224))
+        heatmap = np.uint8(255 * heatmap)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        heatmap = np.float32(heatmap) / 255
+        original_image = original_image.permute(1, 2, 0).numpy()
+        alpha = 0.4
+        overlay = cv2.addWeighted(original_image, 1, heatmap, alpha, 0)
+
+        return overlay, pred_label
+        
     
     def visualize(self):
         '''
-        Visualize the results
+        Visualize the Grad-CAM
         '''
-        for i, (image, label) in enumerate(self.test_dataloader):
-            if i > 10:
+        for i, (image, label) in enumerate(self.test_dataset):
+            original_image, _ = self.visual_dataset[i]
+            if i >= self.max_data_num:
                 break
-            overlay = self.grad_cam(image)
-            cv2.imshow('Grad-CAM', overlay)
+            overlay, pred_label = self.grad_cam(image, original_image)
+            cv2.imshow(str(pred_label) + ' ' + str(label), overlay)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
+
 if __name__ == '__main__':
     # Test the Visualize class
-    vis = Visualize('checkpoint', checkpoint_epoch=10)
+    vis = Visualize('checkpoints/AlexNet_0527_aug',
+                    max_data_num=20)
     vis.visualize()

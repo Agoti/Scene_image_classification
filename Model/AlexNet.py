@@ -213,9 +213,9 @@ class AlexNet(Model):
         torch.save(self.state_dict(), path)
     
 
-    def load_model(self, path):
+    def load_model(self, path, map_location=None):
         print("AlexNet: Loading model from", path)
-        self.load_state_dict(torch.load(path), strict=False)
+        self.load_state_dict(torch.load(path, map_location=map_location), strict=False)
 
 
 class AlexNetNorm(AlexNet):

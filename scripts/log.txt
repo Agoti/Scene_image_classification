@@ -1,0 +1,76 @@
+Config: Load config from ./config/model_config.json
+Config: Load config from ./config/dataset_config.json
+Config: Load config from ./config/train_config.json
+Configs:
+Dataset config: {'data_dir': './data', 'transform_name': 'augmentation', 'max_data_num': inf, 'removed_classes': '123'}
+Model config: {'model_name': 'alexnet_norm_v2'}
+Train config: {'optimizer': 'adam', 'scheduler': 'step', 'criterion': 'cross_entropy', 'device': 'cuda', 'num_epochs': 30, 'batch_size': 32, 'learning_rate': 0.001, 'weight_decay': 0.01, 'step_size': 6, 'gamma': 0.5, 'checkpoint_interval': 6, 'checkpoint_dir': 'checkpoints/AlexNet_0527_rmcls', 'seed': 0}
+--------------------------------------------------
+Building dataset and dataloader...
+Dataset: Loading data from ./data/train_data.csv...
+Dataset: Loading data from ./data/val_data.csv...
+Length of train dataset: 6676
+Number of images in each class: {0: 1637, 5: 1845, 4: 1800, 3: 481, 1: 462, 2: 451}
+Length of val dataset: 2726
+--------------------------------------------------
+Finish building dataloader...
+Building model...
+Model:alexnet_norm_v2
+--------------------------------------------------
+Augmentation: ON
+Learning rate: 0.001 ; Batch size: 32 ; Scheduler: step ; Weight decay: 0.01
+Optimizer: adam
+Normalization: ON
+--------------------------------------------------
+Epoch: 1 Loss: 1.9012 Val acc: 0.4872 Train acc: 0.4976 LR: 0.001
+Epoch: 2 Loss: 1.1603 Val acc: 0.5686 Train acc: 0.5747 LR: 0.001
+Epoch: 3 Loss: 1.1190 Val acc: 0.5029 Train acc: 0.6053 LR: 0.001
+Epoch: 4 Loss: 1.0650 Val acc: 0.4629 Train acc: 0.6299 LR: 0.001
+Epoch: 5 Loss: 1.0508 Val acc: 0.4571 Train acc: 0.6311 LR: 0.001
+Epoch: 6 Loss: 1.0278 Val acc: 0.3639 Train acc: 0.6378 LR: 0.001
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_6.pth
+Metrics: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_6_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_6.pth
+Epoch: 7 Loss: 0.8379 Val acc: 0.6445 Train acc: 0.6959 LR: 0.0005
+Epoch: 8 Loss: 0.7888 Val acc: 0.7098 Train acc: 0.7233 LR: 0.0005
+Epoch: 9 Loss: 0.7630 Val acc: 0.6482 Train acc: 0.7416 LR: 0.0005
+Epoch: 10 Loss: 0.7452 Val acc: 0.7271 Train acc: 0.7512 LR: 0.0005
+Epoch: 11 Loss: 0.7026 Val acc: 0.6798 Train acc: 0.7588 LR: 0.0005
+Epoch: 12 Loss: 0.6815 Val acc: 0.7506 Train acc: 0.7696 LR: 0.0005
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_12.pth
+Metrics: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_12_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_12.pth
+Epoch: 13 Loss: 0.5836 Val acc: 0.8100 Train acc: 0.8057 LR: 0.00025
+Epoch: 14 Loss: 0.5383 Val acc: 0.7428 Train acc: 0.8182 LR: 0.00025
+Epoch: 15 Loss: 0.5285 Val acc: 0.7986 Train acc: 0.8219 LR: 0.00025
+Epoch: 16 Loss: 0.5184 Val acc: 0.7968 Train acc: 0.8244 LR: 0.00025
+Epoch: 17 Loss: 0.4878 Val acc: 0.8048 Train acc: 0.8379 LR: 0.00025
+Epoch: 18 Loss: 0.4882 Val acc: 0.8103 Train acc: 0.8373 LR: 0.00025
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_18.pth
+Metrics: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_18_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_18.pth
+Epoch: 19 Loss: 0.4148 Val acc: 0.8184 Train acc: 0.8676 LR: 0.000125
+Epoch: 20 Loss: 0.3781 Val acc: 0.8313 Train acc: 0.8752 LR: 0.000125
+Epoch: 21 Loss: 0.3691 Val acc: 0.8309 Train acc: 0.8781 LR: 0.000125
+Epoch: 22 Loss: 0.3651 Val acc: 0.8269 Train acc: 0.8785 LR: 0.000125
+Epoch: 23 Loss: 0.3298 Val acc: 0.8184 Train acc: 0.8871 LR: 0.000125
+Epoch: 24 Loss: 0.3320 Val acc: 0.8261 Train acc: 0.8866 LR: 0.000125
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_24.pth
+Metrics: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_24_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_24.pth
+Epoch: 25 Loss: 0.2784 Val acc: 0.8470 Train acc: 0.9085 LR: 6.25e-05
+Epoch: 26 Loss: 0.2755 Val acc: 0.8577 Train acc: 0.9091 LR: 6.25e-05
+Epoch: 27 Loss: 0.2641 Val acc: 0.8474 Train acc: 0.9113 LR: 6.25e-05
+Epoch: 28 Loss: 0.2567 Val acc: 0.8467 Train acc: 0.9133 LR: 6.25e-05
+Epoch: 29 Loss: 0.2379 Val acc: 0.8518 Train acc: 0.9230 LR: 6.25e-05
+Epoch: 30 Loss: 0.2254 Val acc: 0.8573 Train acc: 0.9248 LR: 6.25e-05
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_30.pth
+Metrics: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_30_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_rmcls/checkpoint/alexnet_norm_v2_epoch_30.pth
+Training finished...
+Validation Acc: 0.8573000733675715
+AlexNet: Saving model to checkpoints/AlexNet_0527_rmcls/alexnet_norm_v2.pth
+Config: Save config to checkpoints/AlexNet_0527_rmcls/config/dataset_config.json
+Config: Save config to checkpoints/AlexNet_0527_rmcls/config/model_config.json
+Config: Save config to checkpoints/AlexNet_0527_rmcls/config/train_config.json
+Metrics: checkpoints/AlexNet_0527_rmcls/metrics.json saved
