@@ -1,6 +1,6 @@
 
-CKPT="AlexNet0526_50"
+CKPT="AlexNet_0527_bs128"
 
 python3 Test.py --checkpoint_path=checkpoints/${CKPT} \
                 --result_path=checkpoints/${CKPT} \
-                # --checkpoint_epoch=20 \
+                # --checkpoint_epoch=12 \

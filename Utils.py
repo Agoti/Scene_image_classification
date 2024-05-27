@@ -7,7 +7,7 @@ import random
 import numpy
 import torch
 import sklearn.utils
-from Model.AlexNet import AlexNet, AlexNetNorm, AlexNetPretrained
+from Model.AlexNet import AlexNet, AlexNetNorm, AlexNetPretrained, AlexNetNormv2
 from Dataset import SceneDataset
 from Config import DatasetConfig, ModelConfig, TrainConfig
 
@@ -51,6 +51,7 @@ class Utils:
         models = {
             'alexnet': AlexNet,
             'alexnet_norm': AlexNetNorm,
+            'alexnet_norm_v2': AlexNetNormv2, 
             'alexnet_pretrained': AlexNetPretrained
         }
 

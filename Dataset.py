@@ -46,14 +46,15 @@ class SceneDataset(Dataset):
         super(SceneDataset, self).__init__()
         self.images = []
         self.labels = []
+        assert split in ['train', 'val', 'test']
         self.split = split
-        self.transform = self.build_transform(transform_name)
+        self.transform = self.build_transform(transform_name, split)
         self.max_data_num = max_data_num
         self.load_data(annotation_path, image_dir)
 
     
     @staticmethod
-    def build_transform(transform_name):
+    def build_transform(transform_name, split):
         '''
         Build the [transform] for the dataset
         '''
@@ -68,8 +69,9 @@ class SceneDataset(Dataset):
             pass
         elif transform_name == 'augmentation':
             # Random crop and horizontal flip and normalize and ...
-            transform_list.insert(2, transforms.RandomHorizontalFlip())
-            transform_list.insert(2, transforms.RandomCrop(224, padding=4))
+            if split == 'train':
+                transform_list.insert(2, transforms.RandomHorizontalFlip())
+                transform_list.insert(2, transforms.RandomCrop(224, padding=4))
             transform_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                         std=[0.229, 0.224, 0.225]))
         else:

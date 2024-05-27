@@ -55,6 +55,9 @@ class Test:
         # Load the model
         self.model.load_model(weight_path)
         self.model.to(device)
+        # if torch.cuda.device_count() > 1:
+        #     print(f'Using {torch.cuda.device_count()} GPUs')
+        #     self.model = torch.nn.DataParallel(self.model, device_ids=list(range(torch.cuda.device_count())))
 
         # Build dataset
         self.test_dataset = Utils.build_test_dataset(self.dataset_config)
@@ -85,7 +88,7 @@ class Test:
             images = images.to(self.device)
             labels = labels.to(self.device)
             with torch.no_grad():
-                preds = self.model.inference(images)
+                preds = self.model(images)
             all_preds.append(preds)
             all_labels.append(labels)
 

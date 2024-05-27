@@ -69,13 +69,17 @@ class Trainer:
         # Set device
         self.device = torch.device(train_config.device)
         self.model.to(self.device)
+        # multi-gpu
+        # if torch.cuda.device_count() > 1:
+        #     print("Let's use", torch.cuda.device_count(), "GPUs!")
+        #     self.model = torch.nn.DataParallel(self.model)
 
         # Print options
         print('-' * 50)
         print('Augmentation:', 'ON' if dataset_config.transform_name == 'augmentation' else 'OFF')
-        print('Learning rate:', train_config.learning_rate, '; Batch size:', train_config.batch_size, '; Scheduler:', train_config.scheduler)
+        print('Learning rate:', train_config.learning_rate, '; Batch size:', train_config.batch_size, '; Scheduler:', train_config.scheduler, '; Weight decay:', train_config.weight_decay)
         print('Optimizer:', train_config.optimizer)
-        print('Normalization:', 'ON' if model_config.model_name == 'alexnet_norm' else 'OFF')
+        print('Normalization:', 'ON' if 'norm' in model_config.model_name else 'OFF')
         print('-' * 50)
 
 
@@ -89,6 +93,7 @@ class Trainer:
 
         # Initialize the total loss
         total_loss = 0
+        total_correct = 0
 
         # Iterate over the dataloader
         with tqdm.tqdm(self.train_dataloader, desc='Training') as t:
@@ -104,6 +109,7 @@ class Trainer:
 
                 # Forward pass
                 outputs = self.model(images)
+                total_correct += (torch.argmax(outputs, 1) == labels).sum().item()
 
                 # Compute the loss
                 loss = self.criterion(outputs, labels)
@@ -121,7 +127,7 @@ class Trainer:
                 t.set_postfix({'loss': total_loss / (i + 1)})
 
         # Return the average loss and the learning rate
-        return total_loss / len(self.train_dataloader), self.optimizer.param_groups[0]['lr']
+        return total_loss / len(self.train_dataloader), self.optimizer.param_groups[0]['lr'], total_correct / len(self.train_dataset)
 
     
     def train(self):
@@ -142,7 +148,7 @@ class Trainer:
         for epoch in range(1, self.train_config.num_epochs + 1):
 
             # Train one epoch
-            loss, lr = self.train_one_epoch()
+            loss, lr, train_acc = self.train_one_epoch()
 
             # Update the scheduler
             if self.scheduler:
@@ -150,7 +156,7 @@ class Trainer:
 
             # Validate
             acc = self.validate()
-            print('Epoch:', epoch, 'Loss: %.4f' % loss, 'Val acc: %.4f' % acc, 'LR:', lr)
+            print('Epoch:', epoch, 'Loss: %.4f' % loss, 'Val acc: %.4f' % acc, 'Train acc: %.4f' % train_acc, 'LR:', lr)
 
             # Save checkpoint
             if epoch % checkpoint_interval == 0:
@@ -222,6 +228,7 @@ if __name__ == '__main__':
     # Parse the arguments. The configuration files are loaded from the config directory by default, but can be overridden by the command line arguments.
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data')
+    parser.add_argument('--transform_name', type=str, default='default')
     parser.add_argument('--config_dir', type=str, default='./config')
     parser.add_argument('--model_name', type=str, default='alexnet')
     parser.add_argument('--device', type=str, default='cuda')

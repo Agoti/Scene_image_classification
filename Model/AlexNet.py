@@ -188,8 +188,8 @@ class AlexNet(Model):
 
         # Fully connected layers
         self.classifier = nn.Sequential(
-            LinearBlock(256 * 6 * 6, 4096, norm_layer='dropout', activation='relu'),
-            LinearBlock(4096, 1024, norm_layer='dropout', activation='relu'),
+            LinearBlock(256 * 6 * 6, 4096, norm_layer=None, activation='relu'),
+            LinearBlock(4096, 1024, norm_layer=None, activation='relu'),
             nn.Linear(1024, num_classes)
         )
 
@@ -229,11 +229,39 @@ class AlexNetNorm(AlexNet):
 
         # The only difference is the normalization layers
         self.features = nn.Sequential(
-            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm_5', activation='relu'),
-            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='local_response_norm_5', activation='relu'),
+            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu'),
+            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu'),
             ConvPoolBlock(192, 384, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
             ConvPoolBlock(384, 256, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer=None, activation='relu'),
             ConvPoolBlock(256, 256, kernel_size=3, stride=1, padding=1, pool_layer='max_pool', pool_size=3, norm_layer=None, activation='relu')
+        )
+
+        self.classifier = nn.Sequential(
+            LinearBlock(256 * 6 * 6, 4096, norm_layer='dropout_0.5', activation='relu'),
+            LinearBlock(4096, 1024, norm_layer='dropout_0.5', activation='relu'),
+            nn.Linear(1024, num_classes)
+        )
+
+
+class AlexNetNormv2(AlexNet):
+
+    def __init__(self,
+                num_classes=6):
+        super(AlexNetNormv2, self).__init__()
+
+        # The only difference is the normalization layers
+        self.features = nn.Sequential(
+            ConvPoolBlock(3, 64, kernel_size=11, stride=4, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu'),
+            ConvPoolBlock(64, 192, kernel_size=5, stride=1, padding=2, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu'),
+            ConvPoolBlock(192, 384, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer='batch_norm', activation='relu'),
+            ConvPoolBlock(384, 256, kernel_size=3, stride=1, padding=1, pool_layer=None, norm_layer='batch_norm', activation='relu'),
+            ConvPoolBlock(256, 256, kernel_size=3, stride=1, padding=1, pool_layer='max_pool', pool_size=3, norm_layer='batch_norm', activation='relu')
+        )
+
+        self.classifier = nn.Sequential(
+            LinearBlock(256 * 6 * 6, 4096, norm_layer='dropout_0.5', activation='relu'),
+            LinearBlock(4096, 1024, norm_layer='dropout_0.5', activation='relu'),
+            nn.Linear(1024, num_classes)
         )
 
 

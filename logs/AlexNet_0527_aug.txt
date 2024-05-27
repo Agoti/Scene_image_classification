@@ -1,0 +1,33 @@
+Config: Load config from ./config/model_config.json
+Config: Load config from ./config/dataset_config.json
+Config: Load config from ./config/train_config.json
+Configs:
+Dataset config: {'data_dir': './data', 'transform_name': 'augmentation', 'max_data_num': inf}
+Model config: {'model_name': 'alexnet_norm_v2'}
+Train config: {'optimizer': 'adam', 'scheduler': 'step', 'criterion': 'cross_entropy', 'device': 'cuda', 'num_epochs': 30, 'batch_size': 32, 'learning_rate': 0.001, 'weight_decay': 0.01, 'step_size': 6, 'gamma': 0.5, 'checkpoint_interval': 6, 'checkpoint_dir': 'checkpoints/AlexNet_0527_aug', 'seed': 0}
+--------------------------------------------------
+Building dataset and dataloader...
+Dataset: Loading data from ./data/train_data.csv...
+Dataset: Loading data from ./data/val_data.csv...
+Length of train dataset: 10901
+Length of val dataset: 2726
+--------------------------------------------------
+Finish building dataloader...
+Building model...
+Model:alexnet_norm_v2
+--------------------------------------------------
+Augmentation: ON
+Learning rate: 0.001 ; Batch size: 32 ; Scheduler: step ; Weight decay: 0.01
+Optimizer: adam
+Normalization: ON
+--------------------------------------------------
+Epoch: 1 Loss: 1.6746 Val acc: 0.5341 Train acc: 0.4799 LR: 0.001
+Epoch: 2 Loss: 1.2149 Val acc: 0.4945 Train acc: 0.5227 LR: 0.001
+Epoch: 3 Loss: 1.2145 Val acc: 0.5290 Train acc: 0.5271 LR: 0.001
+Epoch: 4 Loss: 1.0753 Val acc: 0.6889 Train acc: 0.6022 LR: 0.001
+Epoch: 5 Loss: 0.9872 Val acc: 0.7051 Train acc: 0.6491 LR: 0.001
+Epoch: 6 Loss: 0.8995 Val acc: 0.7260 Train acc: 0.6901 LR: 0.001
+AlexNet: Saving model to checkpoints/AlexNet_0527_aug/checkpoint/alexnet_norm_v2_epoch_6.pth
+Metrics: checkpoints/AlexNet_0527_aug/checkpoint/alexnet_norm_v2_epoch_6_metrics.json saved
+Checkpoint saved to: checkpoints/AlexNet_0527_aug/checkpoint/alexnet_norm_v2_epoch_6.pth
+Epoch: 7 Loss: 0.7193 Val acc: 0.7891 Train acc: 0.7644 LR: 0.0005
