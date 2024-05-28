@@ -1,5 +1,5 @@
 
-CKPT="AlexNet_0527_aug"
+CKPT="AlexNet_0527"
 
 python3 Test.py --checkpoint_path=checkpoints/${CKPT} \
                 --result_path=checkpoints/${CKPT} \
